@@ -920,6 +920,23 @@ async function fetchFXRate() {
 // ═══════════════════════════════════════════════
 // DCA ENGINE
 // ═══════════════════════════════════════════════
+
+// Fill weekends/holidays with the last known closing price so that
+// S&P 500 and Gold run on the same daily schedule as BTC.
+function fillForward(prices, startStr, endStr) {
+  const filled = {};
+  let last = null;
+  const d = new Date(startStr + 'T00:00:00Z');
+  const end = new Date(endStr + 'T00:00:00Z');
+  while (d <= end) {
+    const ds = d.toISOString().split('T')[0];
+    if (prices[ds] != null) last = prices[ds];
+    if (last != null) filled[ds] = last;
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+  return filled;
+}
+
 function advanceDate(d, freq) {
   const n = new Date(d);
   if (freq === 'daily')   n.setUTCDate(n.getUTCDate() + 1);
@@ -1253,7 +1270,7 @@ async function calculate() {
       hideLoading();
     }
     if (state.sp500Prices) {
-      sp500Rows = calcDCA(state.sp500Prices, amount, freq, startStr, endStr);
+      sp500Rows = calcDCA(fillForward(state.sp500Prices, startStr, endStr), amount, freq, startStr, endStr);
     }
   }
 
@@ -1270,7 +1287,7 @@ async function calculate() {
       hideLoading();
     }
     if (state.goldPrices) {
-      goldRows = calcDCA(state.goldPrices, amount, freq, startStr, endStr);
+      goldRows = calcDCA(fillForward(state.goldPrices, startStr, endStr), amount, freq, startStr, endStr);
     }
   }
 
