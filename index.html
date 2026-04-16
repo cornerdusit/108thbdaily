@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>108THBDAILY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <style>
+    :root {
+      --bg: #08090d;
+      --card: #0f1117;
+      --card2: #161b27;
+      --border: #1e2433;
+      --border2: #2a3347;
+      --btc: #F4620E;
+      --btc-dim: rgba(247,147,26,0.12);
+      --sp500: #4ade80;
+      --sp500-dim: rgba(74,222,128,0.08);
+      --gold: #fbbf24;
+      --gold-dim: rgba(251,191,36,0.08);
+      --invested: #475569;
+      --profit: #22c55e;
+      --loss: #f43f5e;
+      --text: #f1f5f9;
+      --text2: #94a3b8;
+      --muted: #64748b;
+      --dim: #3f4f66;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: inherit; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      font-size: 14px;
+    }
+
+    /* ── Header ─────────────────────────────────── */
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    /* ── Currency toggle ── */
+    .curr-tabs {
+      display: none;
+      background: var(--card2);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      overflow: hidden;
+      flex-shrink: 0;
+      margin-left: 14px;
+    }
+    .curr-tab {
+      background: none;
+      border: none;
+      color: var(--muted);
+      padding: 4px 13px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: background 0.15s, color 0.15s;
+    }
+    .curr-tab:first-child { border-right: 1px solid var(--border2); }
+    .curr-tab.active { background: rgba(247,147,26,0.15); color: var(--text); }
+
+
+    /* ── Layout ──────────────────────────────────── */
+    .app-layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      height: calc(100vh - 52px);
+    }
+
+    /* ── Sidebar ─────────────────────────────────── */
+    .sidebar {
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .section-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--dim);
+      margin-bottom: 10px;
+    }
+    .form-group { margin-bottom: 12px; }
+    .form-group:last-child { margin-bottom: 0; }
+    label.field-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text2);
+      margin-bottom: 5px;
+    }
+    label.field-label span { color: var(--btc); font-weight: 600; }
+
+    input[type="number"], select {
+      width: 100%;
+      background: var(--card2);
+      border: 1px solid var(--border2);
+      border-radius: 7px;
+      color: var(--text);
+      padding: 8px 11px;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.15s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    input[type="number"]:focus, select:focus {
+      border-color: var(--btc);
+    }
+    .amount-wrap {
+      position: relative;
+    }
+    .currency-prefix {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--btc);
+      font-weight: 700;
+      font-size: 0.85rem;
+      pointer-events: none;
+    }
+    .amount-wrap input { padding-left: 22px; }
+
+    /* Select arrow */
+    .freq-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      background: var(--card2);
+      border: 1px solid var(--border2);
+      border-radius: 7px;
+      overflow: hidden;
+    }
+    .freq-tab {
+      background: none;
+      border: none;
+      color: var(--muted);
+      padding: 8px 0;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .freq-tab:not(:last-child) { border-right: 1px solid var(--border2); }
+    .freq-tab.active {
+      background: rgba(247,147,26,0.15);
+      color: var(--text);
+    }
+    .freq-tab:not(.active):hover { background: #1a2235; color: var(--text2); }
+
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+      content: '▾';
+      position: absolute;
+      right: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+      font-size: 0.7rem;
+    }
+    .select-wrap select { cursor: pointer; }
+
+    .compare-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .compare-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      cursor: pointer;
+      padding: 8px 10px;
+      border-radius: 7px;
+      border: 1px solid var(--border2);
+      background: var(--card2);
+      transition: border-color 0.15s, background 0.15s;
+      user-select: none;
+    }
+    .compare-row:hover { background: #1a2235; }
+    .compare-row.active { border-color: rgba(247,147,26,0.25); background: rgba(247,147,26,0.06); }
+
+    /* pill toggle */
+    .toggle-pill {
+      margin-left: auto;
+      width: 34px; height: 18px;
+      border-radius: 9px;
+      background: var(--dim);
+      position: relative;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .toggle-pill::after {
+      content: '';
+      position: absolute;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: #fff;
+      top: 3px; left: 3px;
+      transition: transform 0.2s;
+    }
+    .compare-row.active .toggle-pill {
+      background: var(--btc);
+    }
+    .compare-row.active .toggle-pill::after {
+      transform: translateX(16px);
+    }
+    .compare-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .compare-label { font-size: 0.82rem; color: var(--text2); flex: 1; }
+    .compare-return {
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+
+    #errorBanner {
+      background: rgba(244,63,94,0.1);
+      border: 1px solid rgba(244,63,94,0.3);
+      color: #fda4af;
+      border-radius: 7px;
+      padding: 8px 11px;
+      font-size: 0.75rem;
+      line-height: 1.5;
+      display: none;
+    }
+
+    /* ── Main area ───────────────────────────────── */
+    .main-area {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .stat-cell {
+      padding: 12px 14px;
+      border-right: 1px solid var(--border);
+    }
+    .stat-cell:last-child { border-right: none; }
+    .stat-name {
+      font-size: 0.65rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 4px;
+    }
+    .stat-val {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+    .stat-val.pos { color: var(--profit); }
+    .stat-val.neg { color: var(--loss); }
+    .stat-sub {
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Chart area */
+    .chart-area {
+      flex: 1;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chart-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+    .chart-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    #dateRangeLabel {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .chart-controls {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .mode-btns {
+      display: flex;
+      background: var(--card2);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .mode-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      padding: 4px 11px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.15s, color 0.15s;
+    }
+    .mode-btn.active {
+      background: rgba(247,147,26,0.15);
+      color: var(--text);
+    }
+    .chart-wrap {
+      flex: 1;
+      position: relative;
+      min-height: 0;
+    }
+
+    /* ── Loading overlay ─────────────────────────── */
+    #loadingOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(8,9,13,0.88);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      z-index: 999;
+    }
+    #loadingOverlay.hidden { display: none; }
+    .spinner {
+      width: 42px; height: 42px;
+      border: 3px solid var(--border2);
+      border-top-color: var(--btc);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loadingMsg {
+      color: var(--text2);
+      font-size: 0.85rem;
+    }
+    #loadingSubMsg {
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+
+    /* ── Light mode ─────────────────────────────── */
+    body.light-mode {
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --card2: #f4f6fa;
+      --border: #e2e8f0;
+      --border2: #cbd5e1;
+      --btc-dim: rgba(247,147,26,0.1);
+      --sp500-dim: rgba(74,222,128,0.1);
+      --gold-dim: rgba(251,191,36,0.1);
+      --profit: #16a34a;
+      --loss: #dc2626;
+      --text: #0f172a;
+      --text2: #334155;
+      --muted: #64748b;
+      --dim: #94a3b8;
+    }
+    body.light-mode header { background: #E9E7E1; }
+    #logoDark  { display: block; }
+    #logoLight { display: none; }
+    body.light-mode #logoDark  { display: none; }
+    body.light-mode #logoLight { display: block; }
+    body.light-mode .freq-tab:not(.active):hover { background: #e8edf3; color: var(--text2); }
+    body.light-mode .compare-row:hover { background: #e8edf3; }
+
+    /* ── Theme toggle button ─────────────────────── */
+    .theme-btn {
+      background: var(--card2);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      color: var(--text2);
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 4px 8px;
+      flex-shrink: 0;
+      margin-left: auto;
+      transition: background 0.15s, color 0.15s;
+    }
+    .theme-btn:hover { background: var(--border2); color: var(--text); }
+
+    /* ── Mobile + Tablet: reorder to Chart → Sidebar → Stats ── */
+    @media (max-width: 1180px) {
+      .app-layout {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        min-height: calc(100vh - 52px);
+      }
+      /* Flatten main-area so chart-area and stats-bar become
+         direct flex children and can be freely reordered      */
+      .main-area  { display: contents; }
+      .chart-area { order: 1; height: 45vh; min-height: 280px; flex: none; }
+      .sidebar    { order: 2; border-right: none; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+      .stats-bar  { order: 3; }
+    }
+
+    /* ── Mobile  (<620px) ─────────────────────────── */
+    @media (max-width: 619px) {
+      body { font-size: 16px; }
+      .sidebar { flex-direction: column; gap: 18px; max-height: none; }
+      .stats-bar { grid-template-columns: repeat(3, 1fr); }
+      .stat-cell:nth-child(3n) { border-right: none; }
+      .stat-name { font-size: 0.7rem; }
+      .stat-val  { font-size: 1.1rem; }
+      .stat-sub  { font-size: 0.7rem; }
+    }
+
+    /* ── Tablet  (620px – 1180px) ──────────────────── */
+    @media (min-width: 620px) and (max-width: 1180px) {
+      body { font-size: 14px; }
+      .sidebar {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 16px 28px;
+        max-height: none;
+      }
+      .sidebar > div { flex: 1; min-width: 220px; }
+      .stats-bar { grid-template-columns: repeat(3, 1fr); }
+      .stat-cell:nth-child(3n) { border-right: none; }
+      .stat-name { font-size: 0.72rem; }
+      .stat-val  { font-size: 1.05rem; }
+      .stat-sub  { font-size: 0.72rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+  <div id="loadingMsg">Fetching Bitcoin price history...</div>
+  <div id="loadingSubMsg">Loading data from 2014 to today</div>
+</div>
+
+<header>
+  <img id="logoDark"  src="./logo-dark.svg"  alt="108th₿daily" style="height:32px;width:auto;flex-shrink:0;">
+  <img id="logoLight" src="./logo-light.svg" alt="108th₿daily" style="height:32px;width:auto;flex-shrink:0;">
+  <div class="curr-tabs">
+    <button class="curr-tab active" onclick="setCurrency('thb')">฿ THB</button>
+    <button class="curr-tab"        onclick="setCurrency('usd')">$ USD</button>
+  </div>
+  <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light/dark mode"><i class="fa-solid fa-sun"></i></button>
+</header>
+
+<div class="app-layout">
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+
+    <div>
+      <div class="section-label" data-i18n="dcaSettings">DCA Settings</div>
+
+      <div class="form-group">
+        <label class="field-label"><span data-i18n="purchaseAmount">Purchase Amount</span></label>
+        <div class="amount-wrap">
+          <span class="currency-prefix" id="currencyPrefix">$</span>
+          <input type="number" id="purchaseAmount" value="108" min="1" max="100000000" step="1">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="field-label" data-i18n="repeatPurchase">Repeat Purchase</label>
+        <div class="freq-tabs">
+          <button class="freq-tab active" data-val="daily"   onclick="setFreq(this)">Daily</button>
+          <button class="freq-tab" data-val="weekly"  onclick="setFreq(this)">Weekly</button>
+          <button class="freq-tab" data-val="monthly" onclick="setFreq(this)">Monthly</button>
+        </div>
+        <input type="hidden" id="frequency" value="daily">
+      </div>
+
+
+      <div class="form-group">
+        <label class="field-label" data-i18n="starting">Starting</label>
+        <div class="select-wrap">
+          <select id="startingYearsAgo">
+            <option value="1">1 year ago</option>
+            <option value="2">2 years ago</option>
+            <option value="3" selected>3 years ago</option>
+            <option value="4">4 years ago</option>
+            <option value="5">5 years ago</option>
+            <option value="6">6 years ago</option>
+            <option value="7">7 years ago</option>
+            <option value="8">8 years ago</option>
+            <option value="9">9 years ago</option>
+            <option value="10">10 years ago</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label" data-i18n="compareTo">Compare To</div>
+      <div class="compare-list">
+        <div class="compare-row" id="rowSP500" onclick="toggleCompare('SP500')">
+          <span class="compare-dot" style="background:var(--sp500)"></span>
+          <span class="compare-label">S&amp;P 500</span>
+          <span class="compare-return" id="retSP500" style="color:var(--sp500)"></span>
+          <span class="toggle-pill"></span>
+        </div>
+        <div class="compare-row" id="rowGold" onclick="toggleCompare('Gold')">
+          <span class="compare-dot" style="background:var(--gold)"></span>
+          <span class="compare-label">Gold (XAU/USD)</span>
+          <span class="compare-return" id="retGold" style="color:var(--gold)"></span>
+          <span class="toggle-pill"></span>
+        </div>
+      </div>
+      <div id="errorBanner" style="margin-top:8px"></div>
+    </div>
+
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="main-area">
+
+    <div class="stats-bar">
+      <div class="stat-cell">
+        <div class="stat-name" data-i18n="statInvested">Total Invested</div>
+        <div class="stat-val" id="sInvested">—</div>
+        <div class="stat-sub" id="sPurchases">—</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-name" data-i18n="statValue">Portfolio Value</div>
+        <div class="stat-val" id="sValue">—</div>
+        <div class="stat-sub" id="sValueDate">—</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-name" data-i18n="statPnL">Profit / Loss</div>
+        <div class="stat-val" id="sPnL">—</div>
+        <div class="stat-sub" id="sPnLSub">—</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-name" data-i18n="statReturn">Total Return</div>
+        <div class="stat-val" id="sReturn">—</div>
+        <div class="stat-sub" id="sAnnReturn">—</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-name" data-i18n="statBTC">BTC Accumulated</div>
+        <div class="stat-val" id="sBTC">—</div>
+        <div class="stat-sub" id="sBTCSub">—</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-name" data-i18n="statAvg">Avg Buy Price</div>
+        <div class="stat-val" id="sAvgPrice">—</div>
+        <div class="stat-sub" id="sCurrentVsAvg">—</div>
+      </div>
+    </div>
+
+    <div class="chart-area">
+      <div class="chart-toolbar">
+        <div>
+          <div class="chart-title" data-i18n="chartTitle">Portfolio Value Over Time</div>
+          <div id="dateRangeLabel">—</div>
+        </div>
+        <div class="chart-controls">
+          <div class="mode-btns">
+            <button class="mode-btn active" id="btnUSD" onclick="setMode('usd')">USD</button>
+            <button class="mode-btn" id="btnPCT" onclick="setMode('pct')">% Return</button>
+          </div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="dcaChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer style="text-align:right;padding:14px;font-size:0.7rem;color:var(--dim);letter-spacing:0.03em;border-top:1px solid var(--border);">
+  created by <a href="https://x.com/cornerdusit" target="_blank" rel="noopener" style="color:var(--dim);text-decoration:underline;">@cornerdusit</a>, with inspiration from dcabtc.com
+</footer>
+
+<!-- Local price data written by fetch_data.py — loaded before the main script.
+     If the file is missing, window.LOCAL_PRICES stays undefined and the app
+     falls back to live API fetching automatically. -->
+<script src="./data/prices.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════
+// CONFIG & STATE
+// ═══════════════════════════════════════════════
+const CACHE_VER = 'dcabtc_v3_';
+const CG_BASE   = 'https://api.coingecko.com/api/v3';
+const YF_BASE   = 'https://query1.finance.yahoo.com/v8/finance/chart';
+const DATA_FROM = new Date('2014-01-01T00:00:00Z');
+
+const state = {
+  btcPrices:    null,
+  sp500Prices:  null,
+  goldPrices:   null,
+  chartMode:    'usd',     // 'usd' | 'pct'
+  currency:     'thb',     // 'usd' | 'thb'
+  thbRate:      null,      // USD → THB exchange rate
+  latestBTCUSD: null,      // kept in USD for header badge recalc
+  chart:        null,
+  btcFromCache: false,
+};
+
+// ═══════════════════════════════════════════════
+// TRANSLATIONS
+// ═══════════════════════════════════════════════
+const T = {
+  en: {
+    headerTitle:     '108THBDAILY',
+    dcaSettings:     'DCA Settings',
+    purchaseAmount:  'Purchase Amount',
+    repeatPurchase:  'Repeat Purchase',
+    starting:        'Starting',
+    compareTo:       'Compare To',
+    freqDaily:       'Daily',
+    freqWeekly:      'Weekly',
+    freqMonthly:     'Monthly',
+    statInvested:    'Total Invested',
+    statValue:       'Portfolio Value',
+    statPnL:         'Profit / Loss',
+    statReturn:      'Total Return',
+    statBTC:         'BTC Accumulated',
+    statAvg:         'Avg Buy Price',
+    chartTitle:      'Portfolio Value Over Time',
+    modePct:         '% Return',
+    modeVal:         'USD',
+    purchases:       n  => `${n} purchases`,
+    asOf:            d  => `as of ${d}`,
+    btcCurrent:      v  => `${v} current`,
+    vsAvg:           p  => `${p}% vs avg`,
+    annualized:      v  => `${v}% ann.`,
+    invested:        'Invested',
+    yearsAgo:        n  => n === 1 ? '1 year ago' : `${n} years ago`,
+  },
+  th: {
+    headerTitle:     '108THBDAILY',
+    dcaSettings:     'การตั้งค่า DCA',
+    purchaseAmount:  'จำนวนเงินที่ซื้อ',
+    repeatPurchase:  'ความถี่การซื้อ',
+    starting:        'เริ่มต้นเมื่อ',
+    compareTo:       'เปรียบเทียบกับ',
+    freqDaily:       'รายวัน',
+    freqWeekly:      'รายสัปดาห์',
+    freqMonthly:     'รายเดือน',
+    statInvested:    'เงินลงทุนรวม',
+    statValue:       'มูลค่าพอร์ต',
+    statPnL:         'กำไร / ขาดทุน',
+    statReturn:      'ผลตอบแทนรวม',
+    statBTC:         'BTC สะสม',
+    statAvg:         'ราคาซื้อเฉลี่ย',
+    chartTitle:      'มูลค่าพอร์ตตามเวลา',
+    modePct:         '% ผลตอบแทน',
+    modeVal:         'THB',
+    purchases:       n  => `${n} ครั้ง`,
+    asOf:            d  => `ณ วันที่ ${d}`,
+    btcCurrent:      v  => `${v} มูลค่าปัจจุบัน`,
+    vsAvg:           p  => `${p}% เทียบค่าเฉลี่ย`,
+    annualized:      v  => `${v}% ต่อปี`,
+    invested:        'เงินลงทุนรวม',
+    yearsAgo:        n  => `${n} ปีที่แล้ว`,
+  },
+};
+
+function t(key, ...args) {
+  const lang = state.currency === 'thb' ? 'th' : 'en';
+  const val  = T[lang][key];
+  return typeof val === 'function' ? val(...args) : (val ?? key);
+}
+
+// ═══════════════════════════════════════════════
+// CACHE
+// ═══════════════════════════════════════════════
+function todayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function cacheSet(key, data) {
+  try {
+    localStorage.setItem(CACHE_VER + key, JSON.stringify({ d: todayStr(), v: data }));
+  } catch (_) {}
+}
+
+function cacheGet(key) {
+  try {
+    const raw = localStorage.getItem(CACHE_VER + key);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    return obj.d === todayStr() ? obj.v : null;
+  } catch (_) { return null; }
+}
+
+// ═══════════════════════════════════════════════
+// LOADING UI
+// ═══════════════════════════════════════════════
+function showLoading(msg, sub) {
+  document.getElementById('loadingMsg').textContent = msg || 'Loading…';
+  document.getElementById('loadingSubMsg').textContent = sub || '';
+  document.getElementById('loadingOverlay').classList.remove('hidden');
+}
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.add('hidden');
+}
+// ═══════════════════════════════════════════════
+// DATA FETCHING
+// ═══════════════════════════════════════════════
+// DATA SOURCES (priority order)
+//  1. Same-day localStorage cache  — instant, no network
+//  2. data/prices.js local file    — instant, no network (run fetch_data.py once)
+//       + one small Kraken top-up  — fills days since the file was last written
+//  3. Full Kraken paginated fetch  — fallback when local file is absent
+// ═══════════════════════════════════════════════
+
+async function krakenTopUp(base) {
+  // Fetch only the candles added since the last date already in `base`.
+  const lastDate = Object.keys(base).sort().pop();
+  if (!lastDate) return base;
+  const since = Math.floor(new Date(lastDate + 'T00:00:00Z').getTime() / 1000);
+  try {
+    const url = `https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=1440&since=${since}`;
+    const res = await fetchT(url, 10000);
+    if (!res.ok) return base;
+    const json = await res.json();
+    const candles = json.result?.XXBTZUSD || json.result?.XBTUSD || [];
+    const merged  = { ...base };
+    for (const [time, , , , close] of candles)
+      merged[new Date(time * 1000).toISOString().split('T')[0]] = parseFloat(close);
+    return merged;
+  } catch {
+    return base; // Network error — just use what we have
+  }
+}
+
+async function fetchBTC() {
+  const local      = window.LOCAL_PRICES?.btc;
+  const localDays  = local ? Object.keys(local).length : 0;
+
+  // 1. Same-day localStorage cache — only trust it if it covers at least as
+  //    many days as the local file (guards against stale pre-file cache).
+  const cached = cacheGet('btc');
+  if (cached && Object.keys(cached).length >= localDays - 10) {
+    state.btcFromCache = true;
+    return cached;
+  }
+
+  // 2. Local file (window.LOCAL_PRICES written by fetch_data.py)
+  if (local && localDays > 100) {
+    el('loadingMsg').textContent    = 'Loading BTC from local file…';
+    el('loadingSubMsg').textContent = 'Topping up recent days from Kraken…';
+    state.btcFromCache = false;
+    const merged = await krakenTopUp(local);
+    cacheSet('btc', merged);
+    return merged;
+  }
+
+  // 3. Full paginated fetch from Kraken (no local file present)
+  state.btcFromCache = false;
+  const prices = {};
+  let since  = Math.floor(DATA_FROM.getTime() / 1000);
+  const nowTs = Math.floor(Date.now() / 1000);
+  let page = 1;
+
+  while (true) {
+    el('loadingMsg').textContent    = `Fetching BTC from Kraken… (batch ${page})`;
+    el('loadingSubMsg').textContent = 'Run fetch_data.py once to skip this step';
+
+    const url = `https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=1440&since=${since}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Kraken HTTP ${res.status}`);
+    const json = await res.json();
+    if (json.error?.length) throw new Error(json.error[0]);
+
+    const candles = json.result?.XXBTZUSD || json.result?.XBTUSD || [];
+    if (!candles.length) break;
+    for (const [time, , , , close] of candles)
+      prices[new Date(time * 1000).toISOString().split('T')[0]] = parseFloat(close);
+
+    const last = json.result?.last;
+    if (!last || last >= nowTs - 86400 * 2) break;
+    since = last;
+    page++;
+    await new Promise(r => setTimeout(r, 350));
+  }
+
+  if (!Object.keys(prices).length) throw new Error('No data returned from Kraken');
+  cacheSet('btc', prices);
+  return prices;
+}
+
+// Fetch with per-request timeout (AbortController)
+async function fetchT(url, ms = 12000) {
+  const ctrl = new AbortController();
+  const tid  = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(tid);
+    return res;
+  } catch (e) {
+    clearTimeout(tid);
+    throw e;
+  }
+}
+
+// Parse a Yahoo Finance v8 chart JSON response → { 'YYYY-MM-DD': closePrice }
+function parseYahooJSON(json) {
+  const result = json?.chart?.result?.[0];
+  if (!result) return null;
+  const timestamps = result.timestamp || [];
+  const closes     = result.indicators?.quote?.[0]?.close || [];
+  const prices     = {};
+  for (let i = 0; i < timestamps.length; i++) {
+    if (closes[i] != null)
+      prices[new Date(timestamps[i] * 1000).toISOString().split('T')[0]] = closes[i];
+  }
+  return Object.keys(prices).length > 50 ? prices : null;
+}
+
+async function fetchYahoo(symbol, cacheKey, label) {
+  // 1. Same-day localStorage cache
+  const cached = cacheGet(cacheKey);
+  if (cached) return { data: cached, fromCache: true };
+
+  // 2. Local file (window.LOCAL_PRICES written by fetch_data.py)
+  //    cacheKey is 'sp500' or 'gold' — matches the keys in LOCAL_PRICES
+  const local = window.LOCAL_PRICES?.[cacheKey];
+  if (local && Object.keys(local).length > 100) {
+    el('loadingMsg').textContent = `Loading ${label} from local file…`;
+    cacheSet(cacheKey, local);
+    return { data: local, fromCache: false };
+  }
+
+  // 3. Live fetch — tries Yahoo Finance direct, then CORS proxies
+  el('loadingMsg').textContent    = `Fetching ${label} from Yahoo Finance…`;
+  el('loadingSubMsg').textContent = 'Run fetch_data.py once to skip live fetching';
+
+  const from = Math.floor(DATA_FROM.getTime() / 1000);
+  const to   = Math.floor(Date.now() / 1000);
+  const sym  = encodeURIComponent(symbol);
+  const q1   = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&period1=${from}&period2=${to}`;
+  const q2   = q1.replace('query1', 'query2');
+
+  const attempts = [
+    q1,
+    q2,
+    `https://corsproxy.io/?${encodeURIComponent(q1)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(q1)}`,
+    `https://corsproxy.io/?${encodeURIComponent(q2)}`,
+  ];
+
+  for (const url of attempts) {
+    try {
+      const res = await fetchT(url, 12000);
+      if (!res.ok) continue;
+      const json   = await res.json();
+      const prices = parseYahooJSON(json);
+      if (prices) {
+        cacheSet(cacheKey, prices);
+        return { data: prices, fromCache: false };
+      }
+    } catch { /* try next */ }
+  }
+
+  throw new Error(`All sources failed for ${label}. Run fetch_data.py to use local data.`);
+}
+
+// ═══════════════════════════════════════════════
+// FX RATE  (USD → THB)
+// ═══════════════════════════════════════════════
+async function fetchFXRate() {
+  const cached = cacheGet('fx_thb');
+  if (cached) { state.thbRate = cached; return; }
+
+  try {
+    const res  = await fetchT('https://open.er-api.com/v6/latest/USD', 8000);
+    const json = await res.json();
+    const rate = json?.rates?.THB;
+    if (rate) {
+      state.thbRate = rate;
+      cacheSet('fx_thb', rate);
+    }
+  } catch (e) {
+    console.warn('FX rate fetch failed:', e);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// DCA ENGINE
+// ═══════════════════════════════════════════════
+function advanceDate(d, freq) {
+  const n = new Date(d);
+  if (freq === 'daily')   n.setUTCDate(n.getUTCDate() + 1);
+  else if (freq === 'weekly')  n.setUTCDate(n.getUTCDate() + 7);
+  else if (freq === 'monthly') n.setUTCMonth(n.getUTCMonth() + 1);
+  return n;
+}
+
+function calcDCA(prices, amount, freq, startStr, endStr) {
+  // Get sorted trading days in range from the price data
+  const days = Object.keys(prices)
+    .filter(d => d >= startStr && d <= endStr)
+    .sort();
+
+  if (!days.length) return [];
+
+  let invested = 0;
+  let units    = 0;
+  let purchases = 0;
+  const rows = [];
+
+  // Next scheduled purchase starts on the first day
+  let nextBuy = new Date(days[0] + 'T00:00:00Z');
+
+  for (const dateStr of days) {
+    const price = prices[dateStr];
+    const dateObj = new Date(dateStr + 'T00:00:00Z');
+
+    if (dateObj >= nextBuy) {
+      units    += amount / price;
+      invested += amount;
+      purchases++;
+      nextBuy = advanceDate(nextBuy, freq);
+    }
+
+    rows.push({ date: dateStr, invested, units, value: units * price, price, purchases });
+  }
+
+  return rows;
+}
+
+// ═══════════════════════════════════════════════
+// CHART
+// ═══════════════════════════════════════════════
+function getThemeColors() {
+  const light = document.body.classList.contains('light-mode');
+  return {
+    grid:          light ? '#e2e8f0' : '#1a2236',
+    tick:          light ? '#94a3b8' : '#3f4f66',
+    legend:        light ? '#475569' : '#94a3b8',
+    tooltipBg:     light ? '#ffffff' : '#1e2433',
+    tooltipBorder: light ? '#e2e8f0' : '#2a3347',
+    tooltipTitle:  light ? '#0f172a' : '#f1f5f9',
+    tooltipBody:   light ? '#475569' : '#94a3b8',
+    invested:      light ? '#94a3b8' : '#2a3a55',
+  };
+}
+
+function updateChartTheme() {
+  if (!state.chart) return;
+  const c = getThemeColors();
+  const o = state.chart.options;
+  o.plugins.legend.labels.color     = c.legend;
+  o.plugins.tooltip.backgroundColor = c.tooltipBg;
+  o.plugins.tooltip.borderColor     = c.tooltipBorder;
+  o.plugins.tooltip.titleColor      = c.tooltipTitle;
+  o.plugins.tooltip.bodyColor       = c.tooltipBody;
+  o.scales.x.grid.color             = c.grid;
+  o.scales.x.ticks.color            = c.tick;
+  o.scales.y.grid.color             = c.grid;
+  o.scales.y.ticks.color            = c.tick;
+  state.chart.update('none');
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-mode');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  el('themeBtn').innerHTML = isLight ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-sun"></i>';
+  updateChartTheme();
+  if (state.btcPrices) calculate();
+}
+
+function initChart() {
+  const ctx = document.getElementById('dcaChart').getContext('2d');
+  const c = getThemeColors();
+  state.chart = new Chart(ctx, {
+    type: 'line',
+    data: { datasets: [] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            color: c.legend,
+            boxWidth: 10,
+            boxHeight: 10,
+            padding: 18,
+            font: { size: 12, weight: '600' },
+          }
+        },
+        tooltip: {
+          backgroundColor: c.tooltipBg,
+          borderColor: c.tooltipBorder,
+          borderWidth: 1,
+          titleColor: c.tooltipTitle,
+          bodyColor: c.tooltipBody,
+          padding: 12,
+          callbacks: {
+            title(items) {
+              const ts = items[0]?.parsed?.x;
+              if (ts == null) return '';
+              const date = new Date(ts);
+              if (state.currency === 'thb') {
+                return date.toLocaleDateString('th-TH-u-ca-gregory', { day: 'numeric', month: 'long', year: 'numeric' });
+              }
+              return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            },
+            label(ctx) {
+              const v = ctx.raw?.y ?? ctx.raw;
+              if (state.chartMode === 'pct') {
+                return `  ${ctx.dataset.label}: ${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
+              }
+              return `  ${ctx.dataset.label}: ${fmtUSD(v)}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            tooltipFormat: 'MMM d, yyyy',
+            displayFormats: { month: 'MMM yy', year: 'yyyy' }
+          },
+          grid: { color: c.grid },
+          ticks: {
+            color: c.tick,
+            maxTicksLimit: 14,
+            font: { size: 11 },
+            callback(value, index, ticks) {
+              const ts = ticks[index]?.value;
+              if (ts == null) return value;
+              const date = new Date(ts);
+              if (state.currency === 'thb') {
+                return date.toLocaleDateString('th-TH-u-ca-gregory', { month: 'short', year: '2-digit' });
+              }
+              return value;
+            }
+          }
+        },
+        y: {
+          grid: { color: c.grid },
+          ticks: {
+            color: c.tick,
+            font: { size: 11 },
+            callback: v => state.chartMode === 'pct' ? `${v.toFixed(0)}%` : fmtCompact(v)
+          }
+        }
+      }
+    }
+  });
+}
+
+function buildDataset(rows, label, color, dimColor, mode, fill) {
+  return {
+    label,
+    data: rows.map(r => ({
+      x: new Date(r.date),
+      y: mode === 'pct'
+        ? (r.invested > 0 ? (r.value - r.invested) / r.invested * 100 : 0)
+        : r.value
+    })),
+    borderColor: color,
+    backgroundColor: dimColor,
+    borderWidth: 2,
+    pointRadius: 0,
+    tension: 0.2,
+    fill: fill ? { target: 'origin', above: dimColor } : false,
+  };
+}
+
+function buildInvestedDataset(rows, mode) {
+  return {
+    label: t('invested'),
+    data: rows.map(r => ({
+      x: new Date(r.date),
+      y: mode === 'pct' ? 0 : r.invested
+    })),
+    borderColor: getThemeColors().invested,
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderDash: [5, 4],
+    pointRadius: 0,
+    tension: 0,
+    fill: false,
+  };
+}
+
+function renderChart(btcRows, sp500Rows, goldRows) {
+  if (!state.chart) initChart();
+  const m = state.chartMode;
+  const ds = [];
+
+  if (btcRows?.length) {
+    ds.push(buildInvestedDataset(btcRows, m));
+    ds.push(buildDataset(btcRows, t('statBTC'), '#f7931a', 'rgba(247,147,26,0.07)', m, true));
+  }
+  if (sp500Rows?.length) {
+    ds.push(buildDataset(sp500Rows, 'S&P 500', '#4ade80', 'rgba(74,222,128,0.04)', m, false));
+  }
+  if (goldRows?.length) {
+    ds.push(buildDataset(goldRows, 'Gold', '#fbbf24', 'rgba(251,191,36,0.04)', m, false));
+  }
+
+  state.chart.data.datasets = ds;
+  state.chart.update();
+}
+
+// ═══════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════
+function lastRow(rows) { return rows?.[rows.length - 1]; }
+
+function updateStats(btcRows, sp500Rows, goldRows) {
+  const r = lastRow(btcRows);
+  if (!r) return;
+
+  const pnl = r.value - r.invested;
+  const pct = r.invested > 0 ? pnl / r.invested * 100 : 0;
+  const avgPrice = r.units > 0 ? r.invested / r.units : 0;
+  const currentPrice = r.price;
+
+  // Annualized return (CAGR approx)
+  const firstRow = btcRows[0];
+  const years = btcRows.length / 365;
+  const cagr = years > 0 && r.invested > 0
+    ? (Math.pow(r.value / r.invested, 1 / years) - 1) * 100
+    : 0;
+
+  el('sInvested').textContent  = fmtUSD(r.invested);
+  el('sPurchases').textContent = t('purchases', r.purchases.toLocaleString());
+  el('sValue').textContent     = fmtUSD(r.value);
+  el('sValueDate').textContent = t('asOf', r.date);
+  el('sBTC').textContent       = r.units >= 1 ? r.units.toFixed(4) + ' ₿' : r.units.toFixed(6) + ' ₿';
+  el('sBTCSub').textContent    = t('btcCurrent', fmtUSD(r.units * currentPrice));
+  el('sAvgPrice').textContent  = fmtUSD(avgPrice);
+
+  const diffPct = ((currentPrice - avgPrice) / avgPrice * 100).toFixed(1);
+  const diffStr = (currentPrice > avgPrice ? '+' : '') + diffPct;
+  el('sCurrentVsAvg').textContent = t('vsAvg', diffStr);
+  el('sCurrentVsAvg').className = 'stat-sub ' + (currentPrice >= avgPrice ? 'pos' : 'neg');
+
+  const pnlEl = el('sPnL');
+  pnlEl.textContent = (pnl >= 0 ? '+' : '') + fmtUSD(pnl);
+  pnlEl.className   = 'stat-val ' + (pnl >= 0 ? 'pos' : 'neg');
+  el('sPnLSub').textContent = (pnl >= 0 ? '+' : '') + pct.toFixed(1) + '%';
+  el('sPnLSub').className   = 'stat-sub ' + (pnl >= 0 ? 'pos' : 'neg');
+
+  const retEl = el('sReturn');
+  retEl.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
+  retEl.className   = 'stat-val ' + (pct >= 0 ? 'pos' : 'neg');
+  el('sAnnReturn').textContent = t('annualized', (cagr >= 0 ? '+' : '') + cagr.toFixed(1));
+  el('sAnnReturn').className   = 'stat-sub ' + (cagr >= 0 ? 'pos' : 'neg');
+
+  // Comparison returns in sidebar
+  if (sp500Rows?.length) {
+    const sr = lastRow(sp500Rows);
+    const spPct = sr.invested > 0 ? (sr.value - sr.invested) / sr.invested * 100 : 0;
+    el('retSP500').textContent = (spPct >= 0 ? '+' : '') + spPct.toFixed(1) + '%';
+  } else {
+    el('retSP500').textContent = '';
+  }
+  if (goldRows?.length) {
+    const gr = lastRow(goldRows);
+    const gPct = gr.invested > 0 ? (gr.value - gr.invested) / gr.invested * 100 : 0;
+    el('retGold').textContent = (gPct >= 0 ? '+' : '') + gPct.toFixed(1) + '%';
+  } else {
+    el('retGold').textContent = '';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// MAIN CALCULATE
+// ═══════════════════════════════════════════════
+async function calculate() {
+  if (!state.btcPrices) { alert('BTC data not ready yet.'); return; }
+
+  let amount = parseFloat(el('purchaseAmount').value) || 100;
+  // Input is in THB when in THB mode — convert to USD for the DCA engine
+  if (state.currency === 'thb' && state.thbRate) {
+    amount = amount / state.thbRate;
+  }
+  const freq   = el('frequency').value;
+  const stYrs  = parseInt(el('startingYearsAgo').value);
+
+  // Date range: start X years ago → today
+  const now = new Date();
+  now.setHours(0,0,0,0);
+
+  const startDate = new Date(now);
+  startDate.setFullYear(startDate.getFullYear() - stYrs);
+
+  const endDate = new Date(now);
+
+  const startStr = startDate.toISOString().split('T')[0];
+  const endStr   = endDate.toISOString().split('T')[0];
+
+  el('dateRangeLabel').textContent = `${fmtDate(startDate)} → ${fmtDate(endDate)}`;
+
+  // BTC DCA
+  const btcRows = calcDCA(state.btcPrices, amount, freq, startStr, endStr);
+
+  // Comparison DCA
+  let sp500Rows = null;
+  let goldRows  = null;
+
+  if (el('rowSP500').classList.contains('active')) {
+    if (!state.sp500Prices) {
+      showLoading('Fetching S&P 500 data…', 'Please wait');
+      try {
+        const { data } = await fetchYahoo('^GSPC', 'sp500', 'S&P 500');
+        state.sp500Prices = data;
+      } catch (e) {
+        console.warn('S&P 500 fetch failed:', e);
+        showError('S&P 500 data unavailable — CORS may be blocking the request. Try from a local server (python -m http.server).');
+      }
+      hideLoading();
+    }
+    if (state.sp500Prices) {
+      sp500Rows = calcDCA(state.sp500Prices, amount, freq, startStr, endStr);
+    }
+  }
+
+  if (el('rowGold').classList.contains('active')) {
+    if (!state.goldPrices) {
+      showLoading('Fetching Gold price data…', 'Please wait');
+      try {
+        const { data } = await fetchYahoo('GC=F', 'gold', 'Gold');
+        state.goldPrices = data;
+      } catch (e) {
+        console.warn('Gold fetch failed:', e);
+        showError('Gold data unavailable — CORS may be blocking. Try from a local server.');
+      }
+      hideLoading();
+    }
+    if (state.goldPrices) {
+      goldRows = calcDCA(state.goldPrices, amount, freq, startStr, endStr);
+    }
+  }
+
+  renderChart(btcRows, sp500Rows, goldRows);
+  updateStats(btcRows, sp500Rows, goldRows);
+}
+
+// ═══════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════
+function setMode(m) {
+  state.chartMode = m;
+  el('btnUSD').className = 'mode-btn' + (m === 'usd' ? ' active' : '');
+  el('btnPCT').className = 'mode-btn' + (m === 'pct' ? ' active' : '');
+  calculate();
+}
+
+function showError(msg) {
+  const b = el('errorBanner');
+  b.textContent = msg;
+  b.style.display = 'block';
+  setTimeout(() => { b.style.display = 'none'; }, 10000);
+}
+
+function el(id) { return document.getElementById(id); }
+
+function fmtUSD(v) {
+  if (v == null || isNaN(v)) return '—';
+  const isTHB = state.currency === 'thb' && state.thbRate;
+  if (isTHB) v = v * state.thbRate;
+  const sym  = isTHB ? '฿' : '$';
+  const abs  = Math.abs(v);
+  const sign = v < 0 ? '-' : '';
+  if (abs >= 1e9) return `${sign}${sym}${(abs/1e9).toFixed(2)}B`;
+  if (abs >= 1e6) return `${sign}${sym}${(abs/1e6).toFixed(2)}M`;
+  if (abs >= 1e3) return `${sign}${sym}${Math.round(abs).toLocaleString()}`;
+  return `${sign}${sym}${abs.toFixed(2)}`;
+}
+
+function fmtCompact(v) {
+  const isTHB = state.currency === 'thb' && state.thbRate;
+  if (isTHB) v = v * state.thbRate;
+  const sym  = isTHB ? '฿' : '$';
+  const abs  = Math.abs(v);
+  const sign = v < 0 ? '-' : '';
+  if (abs >= 1e9) return `${sign}${sym}${(abs/1e9).toFixed(1)}B`;
+  if (abs >= 1e6) return `${sign}${sym}${(abs/1e6).toFixed(1)}M`;
+  if (abs >= 1e3) return `${sign}${sym}${(abs/1e3).toFixed(0)}K`;
+  return `${sign}${sym}${Math.round(abs)}`;
+}
+
+function fmtDate(d) {
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// Update label under Purchase Amount input
+function setFreq(btn) {
+  document.querySelectorAll('.freq-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  el('frequency').value = btn.dataset.val;
+  if (state.btcPrices) calculate();
+}
+
+// ═══════════════════════════════════════════════
+// CURRENCY & TRANSLATIONS
+// ═══════════════════════════════════════════════
+function applyTranslations() {
+  // Static data-i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(node => {
+    node.textContent = t(node.dataset.i18n);
+  });
+
+  // Frequency tab labels
+  document.querySelectorAll('.freq-tab').forEach(btn => {
+    const map = { daily: 'freqDaily', weekly: 'freqWeekly', monthly: 'freqMonthly' };
+    btn.textContent = t(map[btn.dataset.val]);
+  });
+
+  // "Starting" select options
+  const sel = el('startingYearsAgo');
+  if (sel) Array.from(sel.options).forEach((opt, i) => { opt.text = t('yearsAgo', i + 1); });
+
+  // Chart mode value button label (USD ↔ THB)
+  el('btnUSD').textContent = t('modeVal');
+  el('btnPCT').textContent = t('modePct');
+
+  // Currency toggle active state
+  document.querySelectorAll('.curr-tab').forEach((btn, i) => {
+    btn.classList.toggle('active', (i === 0) === (state.currency === 'thb'));
+  });
+
+  // Purchase amount currency prefix
+  const prefixEl = el('currencyPrefix');
+  if (prefixEl) prefixEl.textContent = state.currency === 'thb' ? '฿' : '$';
+
+}
+
+function setCurrency(curr) {
+  if (curr === state.currency) return;
+  const inputEl = el('purchaseAmount');
+  const val = parseFloat(inputEl.value) || 100;
+  if (state.thbRate) {
+    if (curr === 'thb') {
+      inputEl.value = Math.round(val * state.thbRate);
+    } else {
+      inputEl.value = Math.round(val / state.thbRate);
+    }
+  }
+  state.currency = curr;
+  applyTranslations();
+  if (state.btcPrices) calculate();
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+async function init() {
+  initChart();
+  const hasLocal = window.LOCAL_PRICES?.btc && Object.keys(window.LOCAL_PRICES.btc).length > 100;
+  showLoading(
+    hasLocal ? 'Loading BTC from local file…' : 'Fetching BTC from Kraken…',
+    hasLocal ? 'Topping up recent days…'       : 'Run fetch_data.py once to use local data'
+  );
+
+  // Fetch FX rate in parallel with BTC data; both must be ready before first calculate()
+  const fxPromise = fetchFXRate();
+
+  try {
+    state.btcPrices = await fetchBTC();
+    await fxPromise;
+
+    const priceKeys  = Object.keys(state.btcPrices).sort();
+    const latestDate = priceKeys[priceKeys.length - 1];
+    const latestPrice = state.btcPrices[latestDate];
+    state.latestBTCUSD = latestPrice;
+
+    hideLoading();
+    await calculate();
+  } catch (e) {
+    hideLoading();
+    console.error('BTC fetch failed:', e);
+    showError(`Failed to load BTC data: ${e.message}. Check network connection.`);
+    el('errorBanner').style.display = 'block';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// EVENT LISTENERS — auto-recalculate on every change
+// ═══════════════════════════════════════════════
+
+// Debounce for the amount input so we don't recalc on every keystroke
+let _amountTimer = null;
+el('purchaseAmount').addEventListener('input', () => {
+  clearTimeout(_amountTimer);
+  _amountTimer = setTimeout(() => { if (state.btcPrices) calculate(); }, 400);
+});
+
+// Instant recalc for selects
+el('startingYearsAgo').addEventListener('change', () => { if (state.btcPrices) calculate(); });
+
+function toggleCompare(which) {
+  const row = el('row' + which);
+  const isOn = row.classList.toggle('active');
+  if (!isOn) el('ret' + which).textContent = '';
+  if (state.btcPrices) calculate();
+}
+
+
+// Start — restore theme, apply translations, then init
+if (localStorage.getItem('theme') === 'light') {
+  document.body.classList.add('light-mode');
+  el('themeBtn').innerHTML = '<i class="fa-solid fa-moon"></i>';
+}
+applyTranslations();
+init();
+</script>
+</body>
+</html>
