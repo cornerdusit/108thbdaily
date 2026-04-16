@@ -1129,9 +1129,10 @@ function buildInvestedDataset(rows, mode) {
       x: new Date(r.date),
       y: mode === 'pct' ? 0 : r.invested
     })),
-    borderColor: '#ffffff',
+    borderColor: getThemeColors().invested,
     backgroundColor: 'transparent',
     borderWidth: 1.5,
+    borderDash: [5, 4],
     pointRadius: 0,
     tension: 0,
     fill: false,
