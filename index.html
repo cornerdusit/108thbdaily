@@ -809,9 +809,9 @@ async function fetchBTC() {
     for (const [time, , , , close] of candles)
       prices[new Date(time * 1000).toISOString().split('T')[0]] = parseFloat(close);
 
-    const last = json.result?.last;
-    if (!last || last >= nowTs - 86400 * 2) break;
-    since = last;
+    const lastCandleTime = candles[candles.length - 1][0];
+    if (lastCandleTime >= nowTs - 86400 * 2) break;
+    since = lastCandleTime + 1;
     page++;
     await new Promise(r => setTimeout(r, 350));
   }
