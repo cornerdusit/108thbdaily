@@ -24,7 +24,7 @@ import os
 import sys
 import time
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 # ── Dependency check ──────────────────────────────────────────────────────────
 try:
@@ -39,8 +39,9 @@ except ImportError:
 # ── Config ────────────────────────────────────────────────────────────────────
 START_DATE   = '2014-01-01'
 BINANCE_FROM = datetime(2017, 8, 17, tzinfo=timezone.utc)   # Binance launch date
-OUTPUT_DIR   = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
-OUTPUT_FILE  = os.path.join(OUTPUT_DIR, 'prices.js')
+OUTPUT_DIR      = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+OUTPUT_FILE     = os.path.join(OUTPUT_DIR, 'prices.js')
+COMPARE_FILE    = os.path.join(OUTPUT_DIR, 'prices-compare.js')
 
 
 def log(msg='', end='\n'):
@@ -130,6 +131,27 @@ def fetch_yf(symbol, label):
     return prices
 
 
+# ── Compact serialization ─────────────────────────────────────────────────────
+def to_compact(prices):
+    """
+    Convert {YYYY-MM-DD: price} to {'start': 'YYYY-MM-DD', 'close': [price | None, ...]}.
+    The array is contiguous by day starting at the earliest date; missing days
+    (weekends/holidays) are stored as None. This avoids repeating date-string
+    keys and roughly halves the JSON payload.
+    """
+    if not prices:
+        return {'start': None, 'close': []}
+    sorted_dates = sorted(prices)
+    start = datetime.strptime(sorted_dates[0], '%Y-%m-%d').date()
+    end   = datetime.strptime(sorted_dates[-1], '%Y-%m-%d').date()
+    span  = (end - start).days + 1
+    close = [None] * span
+    for ds, p in prices.items():
+        i = (datetime.strptime(ds, '%Y-%m-%d').date() - start).days
+        close[i] = p
+    return {'start': start.isoformat(), 'close': close}
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
     force = '--force' in sys.argv
@@ -158,27 +180,37 @@ def main():
     sp500 = fetch_yf('^GSPC', 'S&P 500')
     gold  = fetch_yf('GC=F',  'Gold')
 
-    payload = {
+    # Main file — BTC only (loaded on every page view)
+    main_payload = {
         'updated': today,
-        'btc':     btc,
-        'sp500':   sp500,
-        'gold':    gold,
+        'btc':     to_compact(btc),
     }
-
-    js = 'window.LOCAL_PRICES=' + json.dumps(payload, separators=(',', ':')) + ';'
-
+    main_js = 'window.LOCAL_PRICES=' + json.dumps(main_payload, separators=(',', ':')) + ';'
     with open(OUTPUT_FILE, 'w') as f:
-        f.write(js)
+        f.write(main_js)
 
-    size_kb = os.path.getsize(OUTPUT_FILE) / 1024
+    # Compare file — loaded lazily when the user toggles S&P/Gold comparison
+    compare_payload = {
+        'updated': today,
+        'sp500':   to_compact(sp500),
+        'gold':    to_compact(gold),
+    }
+    compare_js = 'window.LOCAL_PRICES_COMPARE=' + json.dumps(compare_payload, separators=(',', ':')) + ';'
+    with open(COMPARE_FILE, 'w') as f:
+        f.write(compare_js)
+
+    main_kb    = os.path.getsize(OUTPUT_FILE)  / 1024
+    compare_kb = os.path.getsize(COMPARE_FILE) / 1024
 
     log()
     log('=' * 52)
-    log(f'  Saved : {OUTPUT_FILE}')
-    log(f'  Size  : {size_kb:.0f} KB')
-    log(f'  BTC   : {len(btc):,} days')
-    log(f'  S&P   : {len(sp500):,} days')
-    log(f'  Gold  : {len(gold):,} days')
+    log(f'  {OUTPUT_FILE}')
+    log(f'    Size  : {main_kb:.0f} KB')
+    log(f'    BTC   : {len(btc):,} days')
+    log(f'  {COMPARE_FILE}')
+    log(f'    Size  : {compare_kb:.0f} KB')
+    log(f'    S&P   : {len(sp500):,} days')
+    log(f'    Gold  : {len(gold):,} days')
     log('=' * 52)
     log()
     log('Done. Open index.html in your browser.')

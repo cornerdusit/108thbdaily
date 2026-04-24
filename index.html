@@ -4,12 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>108THBDAILY</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <link rel="preload" href="./data/prices.js" as="script">
+  <script src="./vendor/chart.umd.min.js"></script>
+  <script src="./vendor/chartjs-adapter-date-fns.bundle.min.js"></script>
   <style>
     :root {
       --bg: #08090d;
@@ -36,7 +33,7 @@
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       min-height: 100vh;
       font-size: 14px;
     }
@@ -482,7 +479,7 @@
     <button class="curr-tab active" onclick="setCurrency('thb')">฿ THB</button>
     <button class="curr-tab"        onclick="setCurrency('usd')">$ USD</button>
   </div>
-  <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light/dark mode"><i class="fa-solid fa-sun"></i></button>
+  <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light/dark mode" aria-label="Toggle theme"><svg width="14" height="14" viewBox="0 0 512 512" fill="currentColor" aria-hidden="true"><path d="M361.5 1.2c5 2.1 8.6 6.6 9.6 11.9L391 121l107.9 19.8c5.3 1 9.8 4.6 11.9 9.6s1.5 10.7-1.6 15.2L446.9 256l62.3 90.3c3.1 4.5 3.7 10.2 1.6 15.2s-6.6 8.6-11.9 9.6L391 391 371.1 498.9c-1 5.3-4.6 9.8-9.6 11.9s-10.7 1.5-15.2-1.6L256 446.9l-90.3 62.3c-4.5 3.1-10.2 3.7-15.2 1.6s-8.6-6.6-9.6-11.9L121 391 13.1 371.1c-5.3-1-9.8-4.6-11.9-9.6s-1.5-10.7 1.6-15.2L65.1 256 2.8 165.7c-3.1-4.5-3.7-10.2-1.6-15.2s6.6-8.6 11.9-9.6L121 121 140.9 13.1c1-5.3 4.6-9.8 9.6-11.9s10.7-1.5 15.2 1.6L256 65.1 346.3 2.8c4.5-3.1 10.2-3.7 15.2-1.6zM352 256a96 96 0 1 0 -192 0 96 96 0 1 0 192 0zm-96-64a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/></svg></button>
 </header>
 
 <div class="app-layout">
@@ -609,7 +606,7 @@
 </div>
 
 <footer style="display:flex;align-items:center;justify-content:space-between;padding:14px;font-size:0.7rem;color:var(--dim);letter-spacing:0.03em;border-top:1px solid var(--border);">
-  <a href="pages/dashboard.html" title="Dashboard" style="color:var(--dim);text-decoration:none;font-size:1rem;line-height:1;"><i class="fa-brands fa-bitcoin"></i></a>
+  <a href="pages/dashboard.html" title="Dashboard" aria-label="Dashboard" style="color:var(--dim);text-decoration:none;line-height:1;display:inline-flex;align-items:center;"><svg width="16" height="16" viewBox="0 0 512 512" fill="currentColor" aria-hidden="true"><path d="M504 256c0 136.97-111.03 248-248 248S8 392.97 8 256 119.03 8 256 8s248 111.03 248 248zM364 214.6c4.47-29.88-18.29-45.94-49.42-56.66l10.1-40.5-24.65-6.14-9.83 39.43c-6.48-1.62-13.13-3.14-19.74-4.65l9.9-39.69-24.63-6.14-10.1 40.49c-5.36-1.22-10.62-2.43-15.72-3.7l.03-.13-33.99-8.49-6.56 26.32s18.29 4.19 17.9 4.45c9.98 2.49 11.79 9.1 11.49 14.34l-11.51 46.14c.69.18 1.59.43 2.58.82-.83-.21-1.72-.43-2.62-.66l-16.13 64.63c-1.22 3.04-4.32 7.59-11.3 5.87.25.37-17.93-4.47-17.93-4.47L112 321.21l32.07 8c5.97 1.5 11.81 3.06 17.58 4.53l-10.21 40.93 24.61 6.14 10.1-40.52c6.73 1.83 13.25 3.51 19.63 5.11l-10.06 40.33 24.64 6.14 10.21-40.85c42 7.95 73.57 4.74 86.85-33.22 10.7-30.58-.54-48.23-22.64-59.73 16.08-3.71 28.21-14.29 31.44-36.16zm-56.28 78.9c-7.61 30.58-59.06 14.04-75.75 9.89l13.53-54.28c16.69 4.16 70.17 12.41 62.22 44.39zm7.6-79.34c-6.94 27.82-49.75 13.68-63.66 10.22l12.26-49.21c13.9 3.47 58.63 9.95 51.4 38.99z"/></svg></a>
   <span>created by <a href="https://x.com/cornerdusit" target="_blank" rel="noopener" style="color:var(--dim);text-decoration:underline;">@cornerdusit</a>, with inspiration from dcabtc.com</span>
 </footer>
 
@@ -619,6 +616,12 @@
 <script src="./data/prices.js"></script>
 
 <script>
+// ═══════════════════════════════════════════════
+// INLINE ICONS (replaces Font Awesome)
+// ═══════════════════════════════════════════════
+const SVG_SUN  = '<svg width="14" height="14" viewBox="0 0 512 512" fill="currentColor" aria-hidden="true"><path d="M361.5 1.2c5 2.1 8.6 6.6 9.6 11.9L391 121l107.9 19.8c5.3 1 9.8 4.6 11.9 9.6s1.5 10.7-1.6 15.2L446.9 256l62.3 90.3c3.1 4.5 3.7 10.2 1.6 15.2s-6.6 8.6-11.9 9.6L391 391 371.1 498.9c-1 5.3-4.6 9.8-9.6 11.9s-10.7 1.5-15.2-1.6L256 446.9l-90.3 62.3c-4.5 3.1-10.2 3.7-15.2 1.6s-8.6-6.6-9.6-11.9L121 391 13.1 371.1c-5.3-1-9.8-4.6-11.9-9.6s-1.5-10.7 1.6-15.2L65.1 256 2.8 165.7c-3.1-4.5-3.7-10.2-1.6-15.2s6.6-8.6 11.9-9.6L121 121 140.9 13.1c1-5.3 4.6-9.8 9.6-11.9s10.7-1.5 15.2 1.6L256 65.1 346.3 2.8c4.5-3.1 10.2-3.7 15.2-1.6zM352 256a96 96 0 1 0 -192 0 96 96 0 1 0 192 0zm-96-64a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/></svg>';
+const SVG_MOON = '<svg width="14" height="14" viewBox="0 0 384 512" fill="currentColor" aria-hidden="true"><path d="M223.5 32C100 32 0 132.3 0 256S100 480 223.5 480c60.6 0 115.5-24.2 155.8-63.4c5-4.9 6.3-12.5 3.1-18.7s-10.1-9.7-17-8.5c-9.8 1.7-19.8 2.6-30.1 2.6c-96.9 0-175.5-78.8-175.5-176c0-65.8 36-123.1 89.3-153.3c6.1-3.5 9.2-10.5 7.7-17.3s-7.3-11.9-14.3-12.5c-6.3-.5-12.6-.8-19-.8z"/></svg>';
+
 // ═══════════════════════════════════════════════
 // CONFIG & STATE
 // ═══════════════════════════════════════════════
@@ -706,6 +709,43 @@ function t(key, ...args) {
 }
 
 // ═══════════════════════════════════════════════
+// COMPACT DATA FORMAT
+// ═══════════════════════════════════════════════
+// prices.js stores series as {start:'YYYY-MM-DD', close:[p1,p2,null,...]}.
+// expandSeries() converts that to the legacy {date: price} dict the rest of
+// the app expects. Missing values (weekends/holidays) are dropped from the
+// output.
+function expandSeries(s) {
+  if (!s || !Array.isArray(s.close) || !s.start) return null;
+  const out = {};
+  const d = new Date(s.start + 'T00:00:00Z');
+  const close = s.close;
+  for (let i = 0; i < close.length; i++) {
+    if (close[i] != null) {
+      out[d.toISOString().slice(0, 10)] = close[i];
+    }
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+  return out;
+}
+
+// Lazy-load data/prices-compare.js on first Compare click (S&P 500 or Gold).
+// Returns a promise that resolves once window.LOCAL_PRICES_COMPARE is available.
+let _compareLoadPromise = null;
+function loadCompareData() {
+  if (window.LOCAL_PRICES_COMPARE) return Promise.resolve();
+  if (_compareLoadPromise) return _compareLoadPromise;
+  _compareLoadPromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = './data/prices-compare.js';
+    s.onload  = () => resolve();
+    s.onerror = () => reject(new Error('Failed to load prices-compare.js'));
+    document.head.appendChild(s);
+  });
+  return _compareLoadPromise;
+}
+
+// ═══════════════════════════════════════════════
 // CACHE
 // ═══════════════════════════════════════════════
 function todayStr() {
@@ -769,7 +809,7 @@ async function krakenTopUp(base) {
 }
 
 async function fetchBTC() {
-  const local      = window.LOCAL_PRICES?.btc;
+  const local      = expandSeries(window.LOCAL_PRICES?.btc);
   const localDays  = local ? Object.keys(local).length : 0;
 
   // 1. Same-day localStorage cache — only trust it if it covers at least as
@@ -857,13 +897,18 @@ async function fetchYahoo(symbol, cacheKey, label) {
   const cached = cacheGet(cacheKey);
   if (cached) return { data: cached, fromCache: true };
 
-  // 2. Local file (window.LOCAL_PRICES written by fetch_data.py)
-  //    cacheKey is 'sp500' or 'gold' — matches the keys in LOCAL_PRICES
-  const local = window.LOCAL_PRICES?.[cacheKey];
-  if (local && Object.keys(local).length > 100) {
+  // 2. Local file (data/prices-compare.js written by fetch_data.py) — lazy-loaded.
+  //    cacheKey is 'sp500' or 'gold' — matches the keys in LOCAL_PRICES_COMPARE.
+  try {
     el('loadingMsg').textContent = `Loading ${label} from local file…`;
-    cacheSet(cacheKey, local);
-    return { data: local, fromCache: false };
+    await loadCompareData();
+    const local = expandSeries(window.LOCAL_PRICES_COMPARE?.[cacheKey]);
+    if (local && Object.keys(local).length > 100) {
+      cacheSet(cacheKey, local);
+      return { data: local, fromCache: false };
+    }
+  } catch (_) {
+    // Compare file missing or failed to load — fall through to live fetch.
   }
 
   // 3. Live fetch — tries Yahoo Finance direct, then CORS proxies
@@ -1017,7 +1062,7 @@ function updateChartTheme() {
 function toggleTheme() {
   const isLight = document.body.classList.toggle('light-mode');
   localStorage.setItem('theme', isLight ? 'light' : 'dark');
-  el('themeBtn').innerHTML = isLight ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-sun"></i>';
+  el('themeBtn').innerHTML = isLight ? SVG_MOON : SVG_SUN;
   updateChartTheme();
   if (state.btcPrices) calculate();
 }
@@ -1032,8 +1077,15 @@ function initChart() {
       responsive: true,
       maintainAspectRatio: false,
       animation: false,
+      parsing: false,                                     // data already in {x,y} numeric form — skip Chart.js parsing
+      devicePixelRatio: Math.min(1.5, window.devicePixelRatio || 1),   // cap paint cost on HiDPI/slow GPUs
       interaction: { mode: 'index', intersect: false },
       plugins: {
+        decimation: {                                     // downsample to ~500 points for faster render on big series
+          enabled: true,
+          algorithm: 'lttb',
+          samples: 500,
+        },
         legend: {
           position: 'top',
           labels: {
@@ -1111,7 +1163,7 @@ function buildDataset(rows, label, color, dimColor, mode, fill) {
   return {
     label,
     data: rows.map(r => ({
-      x: new Date(r.date),
+      x: new Date(r.date + 'T00:00:00Z').getTime(),
       y: mode === 'pct'
         ? (r.invested > 0 ? (r.value - r.invested) / r.invested * 100 : 0)
         : r.value
@@ -1129,7 +1181,7 @@ function buildInvestedDataset(rows, mode) {
   return {
     label: t('invested'),
     data: rows.map(r => ({
-      x: new Date(r.date),
+      x: new Date(r.date + 'T00:00:00Z').getTime(),
       y: mode === 'pct' ? 0 : r.invested
     })),
     borderColor: getThemeColors().invested,
@@ -1409,7 +1461,7 @@ function setCurrency(curr) {
 // ═══════════════════════════════════════════════
 async function init() {
   initChart();
-  const hasLocal = window.LOCAL_PRICES?.btc && Object.keys(window.LOCAL_PRICES.btc).length > 100;
+  const hasLocal = Array.isArray(window.LOCAL_PRICES?.btc?.close) && window.LOCAL_PRICES.btc.close.length > 100;
   showLoading(
     hasLocal ? 'Loading BTC from local file…' : 'Fetching BTC from Kraken…',
     hasLocal ? 'Topping up recent days…'       : 'Run fetch_data.py once to use local data'
@@ -1462,7 +1514,7 @@ function toggleCompare(which) {
 // Start — restore theme, apply translations, then init
 if (localStorage.getItem('theme') === 'light') {
   document.body.classList.add('light-mode');
-  el('themeBtn').innerHTML = '<i class="fa-solid fa-moon"></i>';
+  el('themeBtn').innerHTML = SVG_MOON;
 }
 applyTranslations();
 init();

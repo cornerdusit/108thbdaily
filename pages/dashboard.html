@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard — 108THBDAILY</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #08090d;
@@ -26,7 +23,7 @@
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       min-height: 100vh;
       font-size: 14px;
     }
@@ -144,6 +141,21 @@
     .runs a:hover { color: var(--text); }
 
     .loading { color: var(--muted); font-size: 13px; }
+
+    .notice {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: var(--text2);
+    }
+    .notice strong { color: var(--text); font-weight: 500; }
+    .notice.warn { border-color: rgba(251, 191, 36, 0.4); color: #fde68a; }
+    .notice.warn strong { color: var(--warn); }
+    .notice.err { border-color: rgba(244, 63, 94, 0.4); color: #fecdd3; }
+    .notice.err strong { color: var(--err); }
   </style>
 </head>
 <body>
@@ -155,6 +167,7 @@
   <main>
     <section class="section">
       <div class="section-title">Data pipeline</div>
+      <div id="commit-notice" class="notice">Checking last commit…</div>
       <div class="grid">
         <div class="card">
           <div class="label">Last update</div>
@@ -234,7 +247,7 @@
       return Math.floor(s / 60) + 'm ' + (s % 60) + 's';
     }
 
-    // ── Local data ─────────────────────────────
+    // ── Local data (reads compact format: {updated, btc:{start, close:[...]}}) ──
     (function renderLocal() {
       const data = window.LOCAL_PRICES;
       if (!data) return;
@@ -244,14 +257,24 @@
       const ageText = age === 0 ? 'today' : age === 1 ? 'yesterday' : age + ' days ago';
       document.getElementById('last-update-sub').textContent = ageText;
 
-      const btcKeys = Object.keys(data.btc || {}).sort();
-      document.getElementById('btc-count').textContent = btcKeys.length.toLocaleString();
-      if (btcKeys.length) {
-        document.getElementById('btc-range').textContent = btcKeys[0] + ' → ' + btcKeys[btcKeys.length - 1];
-        const latestKey = btcKeys[btcKeys.length - 1];
-        document.getElementById('btc-latest').textContent = fmtUsd(data.btc[latestKey]);
-        document.getElementById('btc-latest-date').textContent = fmtDate(latestKey);
+      const btc = data.btc;
+      if (!btc?.close?.length || !btc.start) return;
+
+      // Count non-null entries; derive first/last dates from the contiguous array.
+      let count = 0, lastIdx = -1, lastPrice = null;
+      for (let i = 0; i < btc.close.length; i++) {
+        if (btc.close[i] != null) { count++; lastIdx = i; lastPrice = btc.close[i]; }
       }
+
+      const startDate = new Date(btc.start + 'T00:00:00Z');
+      const lastDate  = new Date(startDate);
+      lastDate.setUTCDate(lastDate.getUTCDate() + lastIdx);
+      const lastDateStr = lastDate.toISOString().slice(0, 10);
+
+      document.getElementById('btc-count').textContent = count.toLocaleString();
+      document.getElementById('btc-range').textContent = btc.start + ' → ' + lastDateStr;
+      document.getElementById('btc-latest').textContent = fmtUsd(lastPrice);
+      document.getElementById('btc-latest-date').textContent = fmtDate(lastDateStr);
     })();
 
     // ── Workflow status ────────────────────────
@@ -308,7 +331,33 @@
       }
     }
 
+    // ── Last commit / 60-day inactivity countdown ──────────
+    async function loadLastCommit() {
+      const el = document.getElementById('commit-notice');
+      try {
+        const res = await fetch(`https://api.github.com/repos/${REPO}/commits?per_page=1`);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (!data.length) throw new Error('no commits');
+        const dateStr = data[0].commit.author.date;
+        const days = daysAgo(dateStr);
+        const remaining = Math.max(0, 60 - days);
+
+        let cls = '';
+        if (remaining <= 10) cls = 'err';
+        else if (remaining <= 30) cls = 'warn';
+        el.className = 'notice ' + cls;
+
+        const ago = days === 0 ? 'today' : days === 1 ? 'yesterday' : days + ' days ago';
+        const dayWord = remaining === 1 ? 'day' : 'days';
+        el.innerHTML = `Last commit <strong>${ago}</strong> (${fmtDate(dateStr)}) — scheduled workflows pause in <strong>${remaining} ${dayWord}</strong> without new repo activity.`;
+      } catch (e) {
+        el.textContent = 'Could not fetch last commit: ' + e.message;
+      }
+    }
+
     loadRuns();
+    loadLastCommit();
   </script>
 </body>
 </html>
