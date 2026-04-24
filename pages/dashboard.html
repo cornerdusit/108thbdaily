@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — 108THBDAILY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #08090d;
+      --card: #0f1117;
+      --card2: #161b27;
+      --border: #1e2433;
+      --text: #f1f5f9;
+      --text2: #94a3b8;
+      --muted: #64748b;
+      --btc: #F4620E;
+      --ok: #22c55e;
+      --warn: #fbbf24;
+      --err: #f43f5e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: inherit; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      font-size: 14px;
+    }
+
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    header h1 { font-size: 16px; font-weight: 500; }
+    header .sep { color: var(--border); }
+    header a { color: var(--text2); text-decoration: none; font-size: 13px; }
+    header a:hover { color: var(--text); }
+
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 20px;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text2);
+      margin-bottom: 12px;
+    }
+
+    .section + .section { margin-top: 32px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 18px;
+    }
+
+    .card .label {
+      font-size: 12px;
+      color: var(--text2);
+      margin-bottom: 6px;
+    }
+
+    .card .value {
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+
+    .card .sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .dot.ok { background: var(--ok); }
+    .dot.warn { background: var(--warn); }
+    .dot.err { background: var(--err); }
+    .dot.muted { background: var(--muted); }
+
+    .runs {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .runs table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .runs th, .runs td {
+      text-align: left;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .runs th {
+      font-weight: 500;
+      color: var(--text2);
+      background: var(--card2);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .runs tr:last-child td { border-bottom: none; }
+
+    .runs a {
+      color: var(--text2);
+      text-decoration: none;
+    }
+    .runs a:hover { color: var(--text); }
+
+    .loading { color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Dashboard</h1>
+    <span class="sep">|</span>
+    <a href="../index.html">← Back to calculator</a>
+  </header>
+  <main>
+    <section class="section">
+      <div class="section-title">Data pipeline</div>
+      <div class="grid">
+        <div class="card">
+          <div class="label">Last update</div>
+          <div class="value" id="last-update">—</div>
+          <div class="sub" id="last-update-sub"></div>
+        </div>
+        <div class="card">
+          <div class="label">BTC data points</div>
+          <div class="value" id="btc-count">—</div>
+          <div class="sub" id="btc-range"></div>
+        </div>
+        <div class="card">
+          <div class="label">Latest BTC (stored)</div>
+          <div class="value" id="btc-latest">—</div>
+          <div class="sub" id="btc-latest-date"></div>
+        </div>
+        <div class="card">
+          <div class="label">Workflow status</div>
+          <div class="value" id="wf-status"><span class="dot muted"></span>Checking…</div>
+          <div class="sub" id="wf-status-sub"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">Recent workflow runs</div>
+      <div class="runs">
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Trigger</th>
+              <th>Started</th>
+              <th>Duration</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="runs-body">
+            <tr><td colspan="5" class="loading" style="padding: 20px 16px;">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="../data/prices.js"></script>
+  <script>
+    const REPO = 'cornerdusit/108thbdaily';
+    const WORKFLOW = 'update-prices.yml';
+
+    function fmtDate(s) {
+      if (!s) return '';
+      const d = new Date(s);
+      return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function fmtDateTime(s) {
+      if (!s) return '';
+      return new Date(s).toLocaleString(undefined, {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+    }
+
+    function daysAgo(dateStr) {
+      const ms = Date.now() - new Date(dateStr).getTime();
+      return Math.floor(ms / 86400000);
+    }
+
+    function fmtUsd(v) {
+      return '$' + Number(v).toLocaleString(undefined, { maximumFractionDigits: 0 });
+    }
+
+    function fmtDuration(startStr, endStr) {
+      if (!startStr || !endStr) return '—';
+      const s = Math.round((new Date(endStr) - new Date(startStr)) / 1000);
+      if (s < 60) return s + 's';
+      return Math.floor(s / 60) + 'm ' + (s % 60) + 's';
+    }
+
+    // ── Local data ─────────────────────────────
+    (function renderLocal() {
+      const data = window.LOCAL_PRICES;
+      if (!data) return;
+
+      document.getElementById('last-update').textContent = fmtDate(data.updated);
+      const age = daysAgo(data.updated);
+      const ageText = age === 0 ? 'today' : age === 1 ? 'yesterday' : age + ' days ago';
+      document.getElementById('last-update-sub').textContent = ageText;
+
+      const btcKeys = Object.keys(data.btc || {}).sort();
+      document.getElementById('btc-count').textContent = btcKeys.length.toLocaleString();
+      if (btcKeys.length) {
+        document.getElementById('btc-range').textContent = btcKeys[0] + ' → ' + btcKeys[btcKeys.length - 1];
+        const latestKey = btcKeys[btcKeys.length - 1];
+        document.getElementById('btc-latest').textContent = fmtUsd(data.btc[latestKey]);
+        document.getElementById('btc-latest-date').textContent = fmtDate(latestKey);
+      }
+    })();
+
+    // ── Workflow status ────────────────────────
+    async function loadRuns() {
+      const statusEl = document.getElementById('wf-status');
+      const statusSub = document.getElementById('wf-status-sub');
+      const body = document.getElementById('runs-body');
+      try {
+        const res = await fetch(
+          `https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}/runs?per_page=10`
+        );
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const runs = data.workflow_runs || [];
+
+        if (!runs.length) {
+          statusEl.innerHTML = '<span class="dot muted"></span>No runs';
+          body.innerHTML = '<tr><td colspan="5" class="loading" style="padding: 20px 16px;">No runs found.</td></tr>';
+          return;
+        }
+
+        const latest = runs[0];
+        const ok = latest.conclusion === 'success';
+        const dotCls = ok ? 'ok' : (latest.status === 'in_progress' ? 'warn' : 'err');
+        const label = ok ? 'Healthy' : (latest.status === 'in_progress' ? 'Running' : 'Failing');
+        statusEl.innerHTML = `<span class="dot ${dotCls}"></span>${label}`;
+
+        let streak = 0;
+        if (!ok) {
+          for (const r of runs) {
+            if (r.conclusion === 'failure') streak++;
+            else break;
+          }
+        }
+        statusSub.textContent = ok
+          ? 'Latest run ' + fmtDateTime(latest.created_at)
+          : streak + ' consecutive failure' + (streak === 1 ? '' : 's');
+
+        body.innerHTML = runs.map(r => {
+          const c = r.conclusion || r.status;
+          const cls = c === 'success' ? 'ok' : c === 'in_progress' ? 'warn' : 'err';
+          return `<tr>
+            <td><span class="dot ${cls}"></span>${c}</td>
+            <td>${r.event}</td>
+            <td>${fmtDateTime(r.created_at)}</td>
+            <td>${fmtDuration(r.run_started_at || r.created_at, r.updated_at)}</td>
+            <td><a href="${r.html_url}" target="_blank" rel="noopener">view ↗</a></td>
+          </tr>`;
+        }).join('');
+      } catch (e) {
+        statusEl.innerHTML = '<span class="dot muted"></span>Unknown';
+        statusSub.textContent = 'Could not reach GitHub API';
+        body.innerHTML = `<tr><td colspan="5" class="loading" style="padding: 20px 16px;">Failed to load: ${e.message}</td></tr>`;
+      }
+    }
+
+    loadRuns();
+  </script>
+</body>
+</html>
