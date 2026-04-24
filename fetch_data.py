@@ -47,11 +47,12 @@ def log(msg='', end='\n'):
     print(msg, end=end, flush=True)
 
 
-# ── BTC — Binance klines ──────────────────────────────────────────────────────
-def fetch_btc():
+# ── BTC — Binance klines (with yfinance fallback for geo-blocked regions) ────
+def fetch_btc_binance():
     """
     Fetch BTC/USDT daily closing prices from Binance klines (free, no key).
     Returns {YYYY-MM-DD: close_price}.  Data available from 2017-08-17.
+    Raises urllib.error.HTTPError on geo-block (HTTP 451) or other errors.
     """
     log('Fetching BTC from Binance...')
 
@@ -89,6 +90,18 @@ def fetch_btc():
 
     log(f'  => {len(prices)} days  (from {min(prices)})\n')
     return prices
+
+
+def fetch_btc():
+    """
+    Try Binance first; fall back to yfinance BTC-USD if Binance is unreachable
+    (e.g., HTTP 451 geo-block on GitHub Actions US runners).
+    """
+    try:
+        return fetch_btc_binance()
+    except (urllib.error.HTTPError, urllib.error.URLError) as e:
+        log(f'  Binance unavailable ({e}); falling back to yfinance BTC-USD.\n')
+        return fetch_yf('BTC-USD', 'BTC')
 
 
 # ── S&P 500 + Gold — yfinance ─────────────────────────────────────────────────
