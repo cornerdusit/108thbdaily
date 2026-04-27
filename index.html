@@ -366,6 +366,11 @@
       animation: spin 0.7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes tickerPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.35; transform: scale(0.85); }
+    }
+    #btcTickerDot { animation: tickerPulse 2.4s ease-in-out infinite; }
     #loadingMsg {
       color: var(--text2);
       font-size: 0.85rem;
@@ -476,7 +481,7 @@
   <span style="width:1px;height:20px;background:var(--border);flex-shrink:0;"></span>
   <div style="display:flex;flex-direction:column;line-height:1.15;flex-shrink:0;">
     <span style="font-size:14px;font-weight:600;font-style:italic;opacity:0.6;">DCA Calculator</span>
-    <span id="btcTicker" title="Live BTC price" style="font-size:11px;font-weight:600;color:var(--btc);opacity:0.85;letter-spacing:0.01em;display:inline-flex;align-items:center;gap:5px;"><span id="btcTickerDot" style="width:6px;height:6px;border-radius:50%;background:var(--btc);display:inline-block;"></span><span id="btcTickerVal">—</span></span>
+    <span id="btcTicker" title="Live BTC price" style="font-size:11px;font-weight:600;color:var(--text2);opacity:0.85;letter-spacing:0.01em;display:inline-flex;align-items:center;gap:5px;"><span id="btcTickerDot" style="width:6px;height:6px;border-radius:50%;background:var(--text2);display:inline-block;"></span><span id="btcTickerVal">—</span></span>
   </div>
   <div class="curr-tabs">
     <button class="curr-tab active" onclick="setCurrency('thb')">฿ THB</button>
@@ -979,7 +984,7 @@ function fmtTicker(usd) {
   const usdStr = '$' + Math.round(usd).toLocaleString();
   if (!state.thbRate) return usdStr;
   const thbStr = '฿' + Math.round(usd * state.thbRate).toLocaleString();
-  return usdStr + ' · ' + thbStr;
+  return usdStr + ' | ' + thbStr;
 }
 
 function renderTicker() {
