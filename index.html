@@ -474,7 +474,10 @@
   <img id="logoDark"  src="./logo-dark.svg"  alt="108th₿daily" style="height:32px;width:auto;flex-shrink:0;">
   <img id="logoLight" src="./logo-light.svg" alt="108th₿daily" style="height:32px;width:auto;flex-shrink:0;">
   <span style="width:1px;height:20px;background:var(--border);flex-shrink:0;"></span>
-  <span style="font-size:14px;font-weight:600;font-style:italic;opacity:0.6;flex-shrink:0;">DCA Calculator</span>
+  <div style="display:flex;flex-direction:column;line-height:1.15;flex-shrink:0;">
+    <span style="font-size:14px;font-weight:600;font-style:italic;opacity:0.6;">DCA Calculator</span>
+    <span id="btcTicker" title="Live BTC price" style="font-size:11px;font-weight:600;color:var(--btc);opacity:0.85;letter-spacing:0.01em;display:inline-flex;align-items:center;gap:5px;"><span id="btcTickerDot" style="width:6px;height:6px;border-radius:50%;background:var(--btc);display:inline-block;"></span><span id="btcTickerVal">—</span></span>
+  </div>
   <div class="curr-tabs">
     <button class="curr-tab active" onclick="setCurrency('thb')">฿ THB</button>
     <button class="curr-tab"        onclick="setCurrency('usd')">$ USD</button>
@@ -943,6 +946,60 @@ async function fetchYahoo(symbol, cacheKey, label) {
   }
 
   throw new Error(`All sources failed for ${label}. Run fetch_data.py to use local data.`);
+}
+
+// ═══════════════════════════════════════════════
+// LIVE BTC TICKER  (header)
+// ═══════════════════════════════════════════════
+let _liveBTCUSD = null;
+
+async function pollBTCPrice() {
+  // Binance first (cheap, fast); Kraken as fallback for geo-blocked clients.
+  try {
+    const r = await fetchT('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT', 5000);
+    if (r.ok) {
+      const j = await r.json();
+      const p = parseFloat(j.price);
+      if (p > 0) return p;
+    }
+  } catch (_) {}
+  try {
+    const r = await fetchT('https://api.kraken.com/0/public/Ticker?pair=XBTUSD', 5000);
+    if (r.ok) {
+      const j = await r.json();
+      const p = parseFloat(j.result?.XXBTZUSD?.c?.[0] || j.result?.XBTUSD?.c?.[0] || 0);
+      if (p > 0) return p;
+    }
+  } catch (_) {}
+  return null;
+}
+
+function fmtTicker(usd) {
+  if (usd == null) return '—';
+  const isTHB = state.currency === 'thb' && state.thbRate;
+  const v = isTHB ? usd * state.thbRate : usd;
+  return (isTHB ? '฿' : '$') + Math.round(v).toLocaleString();
+}
+
+function renderTicker() {
+  const v = el('btcTickerVal');
+  if (v) v.textContent = fmtTicker(_liveBTCUSD);
+}
+
+async function refreshTicker() {
+  const p = await pollBTCPrice();
+  if (p) {
+    _liveBTCUSD = p;
+    state.latestBTCUSD = p;
+    renderTicker();
+  }
+}
+
+function startTicker() {
+  if (state.latestBTCUSD && _liveBTCUSD == null) _liveBTCUSD = state.latestBTCUSD;
+  renderTicker();
+  refreshTicker();
+  setInterval(refreshTicker, 30000);
 }
 
 // ═══════════════════════════════════════════════
@@ -1453,6 +1510,7 @@ function setCurrency(curr) {
   }
   state.currency = curr;
   applyTranslations();
+  renderTicker();
   if (state.btcPrices) calculate();
 }
 
@@ -1481,6 +1539,7 @@ async function init() {
 
     hideLoading();
     await calculate();
+    startTicker();
   } catch (e) {
     hideLoading();
     console.error('BTC fetch failed:', e);
