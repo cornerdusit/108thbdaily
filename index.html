@@ -976,9 +976,10 @@ async function pollBTCPrice() {
 
 function fmtTicker(usd) {
   if (usd == null) return '—';
-  const isTHB = state.currency === 'thb' && state.thbRate;
-  const v = isTHB ? usd * state.thbRate : usd;
-  return (isTHB ? '฿' : '$') + Math.round(v).toLocaleString();
+  const usdStr = '$' + Math.round(usd).toLocaleString();
+  if (!state.thbRate) return usdStr;
+  const thbStr = '฿' + Math.round(usd * state.thbRate).toLocaleString();
+  return usdStr + ' · ' + thbStr;
 }
 
 function renderTicker() {
